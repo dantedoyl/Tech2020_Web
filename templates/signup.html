@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <h1>Sign Up</h1>
+    <form class="mt-5">
+        <div class="form-group">
+    <label for="exampleInputPassword1">Login</label>
+    <input type="password" class="form-control" id="exampleInputPassword1">
+  </div>
+        <div class="form-group">
+    <label for="exampleInputPassword1">Email</label>
+    <input type="password" class="form-control" id="exampleInputPassword1">
+  </div>
+        <div class="form-group">
+    <label for="exampleInputPassword1">NickName</label>
+    <input type="password" class="form-control" id="exampleInputPassword1">
+  </div>
+        <div class="form-group">
+            <label for="exampleInputPassword1">Password</label>
+            <input type="password" class="form-control" id="exampleInputPassword1">
+        </div>
+        <div class="form-group">
+            <label for="exampleInputPassword1">Password</label>
+            <input type="password" class="form-control" id="exampleInputPassword1">
+        </div>
+        <div class="form-group row">
+            <label for="photo" class="col-sm-2 col-form-label mt-3"><h5>Photo</h5></label>
+            <div class="col-sm-10 mt-3">
+                <input type="file" class="custom-file-input" id="photo">
+                <label class="custom-file-label" for="photo">Choose file</label>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="confirm" class="col-sm-2 col-form-label mt-1"></label>
+            <div class="col-sm-10 mt-1">
+                <button type="submit" id="confirm" class="btn align-content-end btn-primary">Submit</button>
+            </div>
+        </div>
+    </form>
+
+{% endblock content %}

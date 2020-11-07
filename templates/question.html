@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+    <legend class="mb-3">
+        <h1>{{ title }}</h1>
+    </legend>
+
+    <div class="mb-5">
+        {% for question in questions %}
+            {% include 'inc/big_question_bar.html' %}
+        {% endfor %}
+    </div>
+
+    {% for answer in answers %}
+        {% include 'inc/answer.html' %}
+    {% endfor %}
+
+    {% include 'inc/pagination.html' with page=answers %}
+
+
+    <form>
+        <textarea class="form-control mr-5 pr-5" id="question" rows="4" placeholder="Enter your answer here"></textarea>
+        <button type="submit" id="confirm" class="btn mt-3 align-content-end btn-primary">Submit</button>
+    </form>
+{% endblock content %}

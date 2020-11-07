@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <legend class="mb-3">
+        {% if "Tag" in title %}
+            <h1 class="d-inline mr-3">{{ title }}</h1>
+        {% endif %}
+        {% if title == 'New questions' %}
+            <h1>{{ title }} <a href="{% url 'hot' %}" class="badge badge-secondary">Hot</a></h1>
+        {% endif %}
+        {% if title == 'Hot questions' %}
+            <h1>{{ title }} <a href="{% url 'index' %}" class="badge badge-secondary">New</a></h1>
+        {% endif %}
+    </legend>
+
+    {% for question in questions %}
+        {% include 'inc/question_bar.html' %}
+    {% endfor %}
+
+    {% include 'inc/pagination.html' with page=questions %}
+
+{% endblock content %}
