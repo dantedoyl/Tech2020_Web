@@ -27,15 +27,13 @@
             <div class="media-body">
                 <div class="d-flex flex-column bd-highlight mb-3 mr-3 ">
                     <div class="p-2 bd-highlight">
-                        <h3 class="mt-0">Media heading{{ question.title }}</h3>
-                        Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras
-                        purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi
-                        vulputate fringilla. Donec lacinia congue felis in faucibus.
+                        <h3 class="mt-0">{{ question.title }}</h3>
+                        {{ question.text }}
                     </div>
                     <div class="p-2 bd-highlight d-flex justify-content-between align-items-center">
                         {% block question-info %}
                             <span>Tags:
-                                {% for tag in question.tags %}
+                                {% for tag in question.question_tags %}
                                     <a href="{% url 'tag' tag=tag %}">{{ tag }}</a>
                                 {% endfor %}
                 </span>

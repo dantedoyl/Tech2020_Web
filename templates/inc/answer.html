@@ -27,9 +27,7 @@
             <div class="media-body">
                 <div class="d-flex flex-column bd-highlight mb-3 mr-3 ">
                     <div class="p-2 bd-highlight">
-                        Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras
-                        purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi
-                        vulputate fringilla. Donec lacinia congue felis in faucibus.
+                        {{ answer.text }}
                     </div>
                     <div class="p-2 bd-highlight d-flex justify-content-between align-items-center">
                         <div class="form-check">
@@ -37,6 +35,10 @@
                             <label class="form-check-label" for="defaultCheck1">
                                 Correct
                             </label>
+                        </div>
+                        <div class="mb-2 mt-n2">
+                            <span class="mr-2 text-black-50">{{ answer.author }},</span>
+                            <span class="text-black-50">{{ answer.date }}</span>
                         </div>
                     </div>
                 </div>

@@ -1,20 +1,20 @@
-<div class="">
-<h1>Top Tags <!--<span class="badge badge-secondary">New</span>--></h1>
-<div class="text-center">
-<h3>
-{% for tag in tags %}
-    <a href="{% url 'tag' tag=tag %}"
-           class="badge badge-pill m-2 badge-{% cycle 'primary' 'secondary' 'success' 'danger' 'warning' 'info' 'light' 'dark' %} badge-mb-2">{{ tag }}</a>
-{% endfor %}
-</h3>
-</div>
-<h1 class="mt-5">Top Users<!--<span class="badge badge-secondary">New</span>--></h1>
-<div class="text-center">
-<h3>
-{% for user in users %}
-    <a href="#"
-           class="badge badge-pill flex-row mt-2 badge-{% cycle 'primary' 'secondary' 'success' 'danger' 'warning' 'info' 'light' 'dark' %} badge-mb-2">{{ user }}</a>
-{% endfor %}
-</h3>
-</div>
+<div class="sticky-top">
+        <h1>Top Tags <!--<span class="badge badge-secondary">New</span>--></h1>
+        <div class="text-center">
+            <h3>
+                {% for tag in best_tags %}
+                    <a href="{% url 'tag' tag=tag %}"
+                       class="badge badge-pill m-2 badge-{% cycle 'primary' 'secondary' 'success' 'danger' 'warning' 'info' 'light' 'dark' %} badge-mb-2">{{ tag }}</a>
+                {% endfor %}
+            </h3>
+        </div>
+        <h1 class="mt-5">Top Users<!--<span class="badge badge-secondary">New</span>--></h1>
+        <div class="text-center">
+            <h3>
+                {% for user in best_users%}
+                    <a href="#"
+                       class="badge badge-pill flex-row mt-2 badge-{% cycle 'primary' 'secondary' 'success' 'danger' 'warning' 'info' 'light' 'dark' %} badge-mb-2">{{ user }}</a>
+                {% endfor %}
+            </h3>
+        </div>
 </div>
