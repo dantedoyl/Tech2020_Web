@@ -3,10 +3,10 @@ from app.models import Question, Answer, Tag, Profile, LikeQuestion, LikeAnswer
 from django.contrib.auth.models import User
 from random import randint, choice, choices
 from faker import Faker
+from itertools import islice
 
 f = Faker()
 
-test = [5, 10, 15, 50, 25, 35]
 small = [100, 100, 1000, 10000, 5000, 15000]
 medium = [1000, 1000, 10000, 100000, 50000, 150000]
 large = [10000, 10000, 100000, 1000000, 500000, 1500000]
@@ -24,15 +24,35 @@ class Command(BaseCommand):
         parser.add_argument('--likes_questions', type=int, help='Questions likes count')
         parser.add_argument('--likes_answers', type=int, help='Answers likes count')
 
+    def obj_bulk_create(self, Obj, objs):
+        batch_size = 10000
+
+        while True:
+            batch = list(islice(objs, batch_size))
+            if not batch:
+                break
+            Obj.objects.bulk_create(batch, batch_size)
+
     def fill_users(self, cnt):
         if cnt is None:
             return False
 
         print('Filling {} users'.format(cnt))
+        objs = (
+            User(username=f.name() + str(i), email=f.email())
+            for i in range(cnt)
+        )
+        self.obj_bulk_create(User, objs)
+        print('End filling users')
 
-        for i in range(cnt):
-            user = User.objects.create(username=f.name() + str(i), email=f.email())
-            Profile.objects.create(user=user)
+        print('Start filling {} profiles'.format(cnt))
+        users_id = list(User.objects.values_list('id', flat=True))
+        objs = (
+            Profile(user_id=users_id[i])
+            for i in range(cnt)
+        )
+        self.obj_bulk_create(Profile, objs)
+        print('End filling profiles')
 
     def fill_tags(self, cnt):
         if cnt is None:
@@ -40,8 +60,12 @@ class Command(BaseCommand):
 
         print('Filling {} tags'.format(cnt))
 
-        for i in range(cnt):
-            Tag.objects.create(name=f.word() + str(i))
+        objs = (
+            Tag(name=f.word() + str(i))
+            for i in range(cnt)
+        )
+        self.obj_bulk_create(Tag, objs)
+        print('End filling tags')
 
     def fill_questions(self, cnt):
         if cnt is None:
@@ -51,22 +75,19 @@ class Command(BaseCommand):
 
         authors = list(Profile.objects.values_list('id', flat=True))
         tags = list(Tag.objects.values_list('id', flat=True))
-        #tags_count = dict.fromkeys(tags, 0)
 
-        for i in range(cnt):
-            question = Question.objects.create(title=f.sentence()[:128],
-                                               author_id=choice(authors),
-                                               text=f.text())
+        objs = (
+            Question(title=f.sentence()[:128], author_id=choice(authors), text=f.text())
+            for i in range(cnt)
+        )
+        self.obj_bulk_create(Question, objs)
+        print('End filling questions')
 
-            for i in set(choices(tags, k=randint(1, 7))):
-                #tags_count[i] += 1
-                question.tags.add(i)
+        print('Start filling {} question tags'.format(cnt))
+        for item in Question.objects.all():
+            item.tags.set(set(choices(tags, k=randint(1, 7))))
 
-            question.save()
-
-        # for tag, count in tags_count.items():
-        #     if count != 0:
-        #         Tag.objects.filter(pk=tag).update(count=count)
+        print('End filling question tags')
 
     def fill_answers(self, cnt):
         if cnt is None:
@@ -76,19 +97,13 @@ class Command(BaseCommand):
 
         authors = list(Profile.objects.values_list('id', flat=True))
         questions = list(Question.objects.values_list('id', flat=True))
-        #authors_count = dict.fromkeys(authors, 0)
-
-        for i in range(cnt):
-            author = choice(authors)
-            Answer.objects.create(question_id=choice(questions),
-                                  author_id=author,
-                                  text=f.text())
-
-            # authors_count[author] += 1
-
-        # for author, count in authors_count.items():
-        #     if count != 0:
-        #         Profile.objects.filter(pk=author).update(count=count)
+        authors_rand = choices(authors, k=cnt)
+        objs = (
+            Answer(question_id=choice(questions), author_id=authors_rand[i], text=f.text())
+            for i in range(cnt)
+        )
+        self.obj_bulk_create(Answer, objs)
+        print('End filling answers')
 
     def fill_likes_questions(self, cnt):
         if cnt is None:
@@ -98,23 +113,14 @@ class Command(BaseCommand):
 
         authors = list(Profile.objects.values_list('id', flat=True))
         questions = list(Question.objects.values_list('id', flat=True))
-        # question_rating = dict.fromkeys(questions, 0)
-
-        for i in range(cnt):
-            author = choice(authors)
-            question = choice(questions)
-            mark = choice([True, True, True, True, False])
-            LikeQuestion.objects.create(user_id=author,
-                                        state=mark,
-                                        question_id=question)
-            # if mark:
-            #     question_rating[question] += 1
-            # else:
-            #     question_rating[question] -= 1
-
-        # for question, rating in question_rating.items():
-        #     if rating != 0:
-        #         Question.objects.filter(pk=question).update(rating=rating)
+        questions_rand = choices(questions, k=cnt)
+        mark_rand = choices([True, True, True, True, False], k=cnt)
+        objs = (
+            LikeQuestion(user_id=choice(authors), state=mark_rand[i], question_id=questions_rand[i])
+            for i in range(cnt)
+        )
+        self.obj_bulk_create(LikeQuestion, objs)
+        print('End filling questions likes')
 
     def fill_likes_answers(self, cnt):
         if cnt is None:
@@ -124,64 +130,35 @@ class Command(BaseCommand):
 
         authors = list(Profile.objects.values_list('id', flat=True))
         answers = list(Answer.objects.values_list('id', flat=True))
-        # answers_rating = dict.fromkeys(answers, 0)
+        answers_rand = choices(answers, k=cnt)
+        mark_rand = choices([True, True, True, True, False], k=cnt)
 
-        for i in range(cnt):
-            author = choice(authors)
-            answer = choice(answers)
-            mark = choice([True, True, True, True, False])
-            LikeAnswer.objects.create(user_id=author,
-                                      state=mark,
-                                      answer_id=answer)
-        #     if mark:
-        #         answers_rating[answer] += 1
-        #     else:
-        #         answers_rating[answer] -= 1
-        #
-        # for answer, rating in answers_rating.items():
-        #     if rating != 0:
-        #         Answer.objects.filter(pk=answer).update(rating=rating)
+        objs = (
+            LikeAnswer(user_id=choice(authors), state=mark_rand[i], answer_id=answers_rand[i])
+            for i in range(cnt)
+        )
+        self.obj_bulk_create(LikeAnswer, objs)
+        print('End filling answers likes')
 
     def handle(self, *args, **options):
-        users_count = options.get('users')
-        tags_count = options.get('tags')
-        questions_count = options.get('questions')
-        answers_count = options.get('answers')
-        like_questions_count = options.get('likes_questions')
-        like_answers_count = options.get('likes_answers')
+        current = [options.get('users'),
+                   options.get('tags'),
+                   options.get('questions'),
+                   options.get('answers'),
+                   options.get('likes_questions'),
+                   options.get('likes_answers')]
 
-        if options.get('db_size') == 'test':
-            users_count = test[0]
-            tags_count = test[1]
-            questions_count = test[2]
-            answers_count = test[3]
-            like_questions_count = test[4]
-            like_answers_count = test[5]
-        elif options.get('db_size') == 'small':
-            users_count = small[0]
-            tags_count = small[1]
-            questions_count = small[2]
-            answers_count = small[3]
-            like_questions_count = small[4]
-            like_answers_count = small[5]
+
+        if options.get('db_size') == 'small':
+            current = small
         elif options.get('db_size') == 'medium':
-            users_count = medium[0]
-            tags_count = medium[1]
-            questions_count = medium[2]
-            answers_count = medium[3]
-            like_questions_count = medium[4]
-            like_answers_count = medium[5]
+            current = medium
         elif options.get('db_size') == 'large':
-            users_count = large[0]
-            tags_count = large[1]
-            questions_count = large[2]
-            answers_count = large[3]
-            like_questions_count = large[4]
-            like_answers_count = large[5]
+            current = large
 
-        self.fill_users(users_count)
-        self.fill_tags(tags_count)
-        self.fill_questions(questions_count)
-        self.fill_answers(answers_count)
-        self.fill_likes_questions(like_questions_count)
-        self.fill_likes_answers(like_answers_count)
+        self.fill_users(current[0])
+        self.fill_tags(current[1])
+        self.fill_questions(current[2])
+        self.fill_answers(current[3])
+        self.fill_likes_questions(current[4])
+        self.fill_likes_answers(current[5])

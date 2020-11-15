@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-def avatar_upload_to(instance, filename):
+def avatar_upload_to(instance):
     return 'uploads/avatars/{}/{}'.format(instance.user.id, 'user{}.jpg'.format(instance.user.id))
 
 
