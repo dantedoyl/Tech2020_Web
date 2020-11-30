@@ -47,8 +47,9 @@ class Command(BaseCommand):
 
         print('Start filling {} profiles'.format(cnt))
         users_id = list(User.objects.values_list('id', flat=True))
+        users_names = list(User.objects.values_list('username', flat=True))
         objs = (
-            Profile(user_id=users_id[i])
+            Profile(user_id=users_id[i], nickname=users_names[i])
             for i in range(cnt)
         )
         self.obj_bulk_create(Profile, objs)

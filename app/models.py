@@ -2,8 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-def avatar_upload_to(instance):
-    return 'uploads/avatars/{}/{}'.format(instance.user.id, 'user{}.jpg'.format(instance.user.id))
+def avatar_upload_to(instance, filename):
+    return 'avatars/{}/{}'.format(instance.user.id, filename)
 
 
 class ProfileManager(models.Manager):
@@ -17,12 +17,12 @@ class ProfileManager(models.Manager):
 # Create your models here.
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    avatar = models.ImageField(upload_to=avatar_upload_to, verbose_name='Аватар')
-
+    nickname = models.CharField(max_length=128, unique=True, verbose_name='Nickname')
+    avatar = models.ImageField(upload_to=avatar_upload_to, default='/avatars/default_avatar/av.png', verbose_name='Аватар')
     objects = ProfileManager()
 
     def __str__(self):
-        return self.user.username
+        return self.nickname
 
     def rating(self):
         return Question.objects.by_author(self.user_id) + Answer.objects.by_author(self.user_id)
@@ -66,8 +66,8 @@ class QuestionManager(models.Manager):
     def by_tag(self, tag):
         return self.filter(tags__name=tag)
 
-    def by_id(self, question_id):
-        return self.filter(id=question_id)
+    def get(self, id):
+        return self.filter(id=id)
 
     def by_author(self, author_id):
         return self.filter(author__user_id=author_id).count()

@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app'
+    'app',
+    'bootstrap4'
 ]
 
 MIDDLEWARE = [
@@ -126,3 +127,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "uploads",
     '/var/www/static/',
 ]
+
+LOGIN_URL = '/login/'
+MEDIA_ROOT = BASE_DIR / 'uploads/'
+MEDIA_URL = '/uploads/'

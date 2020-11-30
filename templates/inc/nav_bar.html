@@ -17,7 +17,7 @@
             <input class="form-control mr-sm-2 form-control-lg" type="search" placeholder="Search" aria-label="Search">
             <button class="btn btn-outline-success my-2 my-sm-0 btn-lg" type="submit">Search</button>
         </form>
-        {% if user_login == True %}
+        {% if request.user.is_authenticated %}
             <div class="d-flex justify-content-end align-items-center">
                 <div class="p-2 bd-highlight">
                     <a role="button" class="btn btn-success btn-lg" href="{% url 'ask' %}">Ask</a>
@@ -28,14 +28,14 @@
                         <div class="card-body p-3">
                             <div class="bd-highlight">
                                 {% load static %}
-                                <img src="{% static "img/av.png" %}"
+                                <img src="{{ request.user.profile.avatar.url }}"
                                      class="rounded float-right" height="64p" width="64p">
                             </div>
-                            <h5 class="card-title">Max Torzhkov</h5>
+                            <h5 class="card-title">{{ user.profile.nickname }}</h5>
                             <h6 class="card-subtitle mb-2 text-muted"></h6>
                             <p class="card-text"></p>
                             <a href="{% url "settings" %}" class="card-link">Настройки</a>
-                            <a href="#" class="card-link">Выход</a>
+                            <a href="{% url "logout" %}?next={{ request.path }}" class="card-link">Выход</a>
                         </div>
                     </div>
                 </div>

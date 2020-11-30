@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% load static %}
+{% load bootstrap4 %}
 
 {% block content %}
 
@@ -21,8 +22,11 @@
     {% include 'inc/pagination.html' with page=answers %}
 
 
-    <form>
-        <textarea class="form-control mr-5 pr-5" id="question" rows="4" placeholder="Enter your answer here"></textarea>
-        <button type="submit" id="confirm" class="btn mt-3 align-content-end btn-primary">Submit</button>
+    <form method="POST" novalidate>
+    {% csrf_token %}
+        {% bootstrap_field form.text show_label=False placeholder='Enter your answer here'%}
+        {% buttons %}
+        <button type="submit" class="btn btn-primary">Submit</button>
+    {% endbuttons %}
     </form>
 {% endblock content %}
