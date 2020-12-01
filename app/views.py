@@ -1,10 +1,14 @@
 from django.shortcuts import render, redirect, reverse, get_object_or_404, get_list_or_404
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from app.models import Question, Answer, Profile,Tag
+from app.models import Question, Answer, Profile, Tag, LikeAnswer, LikeQuestion
 from django.contrib import auth
 from app.forms import LoginForm, AskForm, RegistrForm, SettingsForm, AnswerForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.template.defaulttags import register
+
 
 user = True
 
@@ -22,24 +26,39 @@ def pagination(object_list, request, per_page=5):
 
     return content
 
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
 
 def index(request):
+    user_likes = {}
+    if request.user.is_authenticated:
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
     return render(request, 'index.html', {
+        'user_reaction': user_likes,
         'title': 'New questions',
         'questions': pagination(Question.objects.new(), request),
     })
 
 
 def hot(request):
+    user_likes = {}
+    if request.user.is_authenticated:
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
     return render(request, 'index.html', {
+        'user_reaction': user_likes,
         'title': 'Hot questions',
         'questions': pagination(Question.objects.hot(), request),
     })
 
 
 def tag(request, tag):
-    request.session['redirect'] = request.path
+    user_likes = {}
+    if request.user.is_authenticated:
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
     return render(request, 'index.html', {
+        'user_reaction': user_likes,
         'title': f'Tag: {tag}',
         'questions': pagination(Question.objects.by_tag(tag=tag), request),
     })
@@ -137,7 +156,6 @@ def logout(request):
 
 @login_required
 def settings(request):
-    print(request.session['redirect'])
     if request.method == 'GET':
         form = SettingsForm(instance=request.user)
         profile_form = SettingsForm(instance=request.user.profile)
@@ -158,6 +176,12 @@ def settings(request):
 
 @login_required
 def question(request, id):
+    user_likes = {}
+    if request.user.is_authenticated:
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
+    user_likes_answer ={}
+    if request.user.is_authenticated:
+        user_likes_answer = LikeAnswer.objects.authors_reaction(request.user.profile.id)
     question = get_list_or_404(Question, id=id)
     if request.method == 'GET':
         form = AnswerForm()
@@ -169,11 +193,49 @@ def question(request, id):
             answer.author = request.user.profile
             answer.save()
             answer_pages = pagination(Answer.objects.by_question(id), request, per_page=3).paginator.num_pages
-            print(answer_pages)
             return redirect(request.path + '?page='+str(answer_pages))
     return render(request, 'question.html', {
         'title': f'Question {id}',
         'questions': question,
+        'user_reaction': user_likes,
+        'user_reaction_answer': user_likes_answer,
         'answers': pagination(Answer.objects.by_question(id), request, per_page=3),
         'form': form,
     })
+
+@require_POST
+@login_required
+def vote(request):
+    data = request.POST
+    reaction_data = {
+        'user': request.user.profile,
+        # 'question': Question.objects.get(id=data['id'])
+    }
+    if data['action'] == 'like':
+        reaction_data['state'] = True
+    else:
+        reaction_data['state'] = False
+    new_data = {
+        'type': data['type'],
+        'id': data['id'],
+        'action': data['action']
+    }
+
+    if data['type'] == 'question':
+        reaction_data['question'] = Question.objects.get(id=data['id'])
+        LikeQuestion.objects.create(**reaction_data)
+        new_data['rating'] = Question.objects.get(id=data['id']).rating()
+    else:
+        reaction_data['answer'] = Answer.objects.get(id=data['id'])
+        LikeAnswer.objects.create(**reaction_data)
+        new_data['rating'] = Answer.objects.get(id=data['id']).rating()
+    return JsonResponse(new_data)
+
+@require_POST
+@login_required
+def correct(request):
+    data = request.POST
+    answer = Answer.objects.get(id=data['id'])
+    answer.is_correct = not answer.is_correct
+    answer.save()
+    return JsonResponse(data)

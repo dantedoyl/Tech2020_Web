@@ -66,7 +66,7 @@ class QuestionManager(models.Manager):
     def by_tag(self, tag):
         return self.filter(tags__name=tag)
 
-    def get(self, id):
+    def by_id(self, id):
         return self.filter(id=id)
 
     def by_author(self, author_id):
@@ -88,6 +88,9 @@ class Question(models.Model):
     def rating(self):
         return LikeQuestion.objects.by_question(question_id=self.id).filter(
             state=True).count() - LikeQuestion.objects.by_question(question_id=self.id).filter(state=False).count()
+
+    def has_reaction(self, author_id):
+        return LikeQuestion.objects.by_question(question_id=self.id).filter(user__id=author_id)
 
     def question_tags(self):
         return self.tags.all()
@@ -133,10 +136,19 @@ class LikeQuestionManager(models.Manager):
     def by_question(self, question_id):
         return self.filter(question__id=question_id)
 
+    def by_author(self, author_id):
+        return self.filter(user_id=author_id)
+
+    def authors_reaction(self, author_id):
+        likes = {}
+        for like in self.filter(user_id=author_id).all():
+            likes[like.question.id]=like.state
+        return likes
+
 
 class LikeQuestion(models.Model):
     user = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь, который поставил отметку')
-    state = models.BooleanField( null=True, default=None, verbose_name='Состояние отметки')
+    state = models.BooleanField(null=True, default=None, verbose_name='Состояние отметки')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name='Вопрос')
 
     objects = LikeQuestionManager()
@@ -149,6 +161,12 @@ class LikeQuestion(models.Model):
 class LikeAnswerManager(models.Manager):
     def by_answer(self, answer_id):
         return self.filter(answer__id=answer_id)
+
+    def authors_reaction(self, author_id):
+        likes = {}
+        for like in self.filter(user_id=author_id).all():
+            likes[like.answer.id]=like.state
+        return likes
 
 
 class LikeAnswer(models.Model):

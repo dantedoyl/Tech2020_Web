@@ -21,4 +21,7 @@
 
     {% include 'inc/pagination.html' with page=questions %}
 
+    {% block jscode %}
+        <script src="{% static "js/vote.js" %}"></script>
+    {% endblock %}
 {% endblock content %}

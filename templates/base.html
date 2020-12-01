@@ -53,9 +53,13 @@
       <span class="text-muted">Developed by Max Torzhkov</span>
     </div>
   </footer>
-  <script src="{% static "js/jquery.slim.min.js" %}"></script>
+  <script src="{% static "js/jquery-3.5.1.min.js" %}"></script>
   <script src="{% static "js/popper.min.js" %}"></script>
+  <script src="{% static "js/csrf.js" %}"></script>
   <script src="{% static "js/bootstrap.min.js" %}"></script>
-</body>
 
+{% block jscode %}
+{% endblock %}
+
+</body>
 </html>

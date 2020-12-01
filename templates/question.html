@@ -29,4 +29,9 @@
         <button type="submit" class="btn btn-primary">Submit</button>
     {% endbuttons %}
     </form>
+
+        {% block jscode %}
+        <script src="{% static "js/vote.js" %}"></script>
+    {% endblock %}
 {% endblock content %}
+
