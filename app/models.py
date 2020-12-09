@@ -139,10 +139,11 @@ class LikeQuestionManager(models.Manager):
     def by_author(self, author_id):
         return self.filter(user_id=author_id)
 
-    def authors_reaction(self, author_id):
+    def authors_reaction(self, author_id, questions):
         likes = {}
-        for like in self.filter(user_id=author_id).all():
-            likes[like.question.id]=like.state
+        for question in questions:
+            for like in self.filter(user_id=author_id, question_id=question.id).all():
+                likes[like.question.id]=like.state
         return likes
 
 
@@ -162,10 +163,11 @@ class LikeAnswerManager(models.Manager):
     def by_answer(self, answer_id):
         return self.filter(answer__id=answer_id)
 
-    def authors_reaction(self, author_id):
+    def authors_reaction(self, author_id, answers):
         likes = {}
-        for like in self.filter(user_id=author_id).all():
-            likes[like.answer.id]=like.state
+        for answer in answers:
+            for like in self.filter(user_id=author_id, answer_id=answer.id).all():
+                likes[like.answer.id]=like.state
         return likes
 
 

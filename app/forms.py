@@ -1,5 +1,5 @@
 from django import forms
-from app.models import Question, User, Answer
+from app.models import Question, User, Answer, Profile
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 class LoginForm(forms.Form):
@@ -7,11 +7,14 @@ class LoginForm(forms.Form):
     password = forms.CharField(required=True, widget=forms.PasswordInput())
 
 class RegistrForm(UserCreationForm):
-    photo = forms.ImageField(required=False)
-    nickname = forms.CharField(required=False)
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2', 'nickname', 'photo']
+        fields = ['username', 'email', 'password1', 'password2']
+        
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['nickname', 'avatar']
 
 class AskForm(forms.ModelForm):
     tags = forms.CharField(required=False)
@@ -20,11 +23,9 @@ class AskForm(forms.ModelForm):
         fields = ['title', 'text', 'tags']
 
 class SettingsForm(UserChangeForm):
-    photo = forms.ImageField(required=False)
-    nickname = forms.CharField(required=False)
     class Meta:
         model = User
-        fields = ['username', 'email', 'photo', 'nickname']
+        fields = ['username', 'email']
 
     def clean_password(self):
         return self.clean_password

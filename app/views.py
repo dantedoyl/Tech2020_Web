@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, reverse, get_object_or_404, get_l
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from app.models import Question, Answer, Profile, Tag, LikeAnswer, LikeQuestion
 from django.contrib import auth
-from app.forms import LoginForm, AskForm, RegistrForm, SettingsForm, AnswerForm
+from app.forms import LoginForm, AskForm, RegistrForm, SettingsForm, AnswerForm, ProfileForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
@@ -32,35 +32,38 @@ def get_item(dictionary, key):
 
 
 def index(request):
+    questions = pagination(Question.objects.new(), request)
     user_likes = {}
     if request.user.is_authenticated:
-        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id, questions.object_list)
     return render(request, 'index.html', {
         'user_reaction': user_likes,
         'title': 'New questions',
-        'questions': pagination(Question.objects.new(), request),
+        'questions': questions,
     })
 
 
 def hot(request):
+    questions = pagination(Question.objects.hot(), request)
     user_likes = {}
     if request.user.is_authenticated:
-        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id, questions.object_list)
     return render(request, 'index.html', {
         'user_reaction': user_likes,
         'title': 'Hot questions',
-        'questions': pagination(Question.objects.hot(), request),
+        'questions': questions,
     })
 
 
 def tag(request, tag):
+    questions = pagination(Question.objects.by_tag(tag=tag), request)
     user_likes = {}
     if request.user.is_authenticated:
-        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id, questions.object_list)
     return render(request, 'index.html', {
         'user_reaction': user_likes,
         'title': f'Tag: {tag}',
-        'questions': pagination(Question.objects.by_tag(tag=tag), request),
+        'questions': questions,
     })
 
 
@@ -90,35 +93,30 @@ def ask(request):
 def registr(request):
     error = None
     if request.method == 'GET':
-        form = RegistrForm()
+        reg_form = RegistrForm()
+        profile_form = ProfileForm()
     else:
-        form = RegistrForm(data=request.POST)
-        if Profile.objects.filter(nickname=request.POST.get('nickname')).count() == 0:
-            if form.is_valid():
-                form.save()
-                auth_data = {
-                    'username': form.cleaned_data['username'],
-                    'password': form.cleaned_data['password1']
-                }
-                user = auth.authenticate(request, **auth_data)
-                if user is not None:
-                    auth.login(request, user)
-                profile_info = {
-                            'user': request.user,
-                }
-                if form.cleaned_data['nickname'] is not None:
-                    profile_info['nickname'] = form.cleaned_data['nickname']
-                else:
-                    profile_info['nickname'] = form.cleaned_data['username']
-                if request.FILES.get('photo'):
-                    profile_info['avatar'] = request.FILES.get('photo')
-                new_profile = Profile.objects.create(**profile_info)
-                return redirect('/')
+        reg_form = RegistrForm(data=request.POST)
+        profile_form = ProfileForm(data=request.POST, files=request.FILES)
+        if reg_form.is_valid() and profile_form.is_valid():
+            reg_form.save()
+            profile = profile_form.save(commit=False)
+            auth_data = {
+                'username': reg_form.cleaned_data['username'],
+                'password': reg_form.cleaned_data['password1']
+            }
+            user = auth.authenticate(request, **auth_data)
+            profile.user = user
+            profile.save()
+            if user is not None:
+                auth.login(request, user)
+            return redirect('/')
         else:
             error = True
     return render(request, 'signup.html', {
         'error': error,
-        'form': form,
+        'reg_form': reg_form,
+        'profile_form': profile_form,
         'title': 'registr',
     })
 
@@ -158,14 +156,12 @@ def logout(request):
 def settings(request):
     if request.method == 'GET':
         form = SettingsForm(instance=request.user)
-        profile_form = SettingsForm(instance=request.user.profile)
+        profile_form = ProfileForm(instance=request.user.profile)
     else:
         form = SettingsForm(data=request.POST, instance=request.user)
-        profile_form = SettingsForm(data=request.POST, instance=request.user.profile)
-        if form.is_valid():
-            user = form.save()
-            if request.FILES.get('photo'):
-                user.profile.avatar = request.FILES.get('photo')
+        profile_form = ProfileForm(data=request.POST, files=request.FILES, instance=request.user.profile)
+        if form.is_valid() and profile_form.is_valid():
+            form.save()
             profile_form.save()
     return render(request, 'settings.html', {
         'profile_form': profile_form,
@@ -176,13 +172,14 @@ def settings(request):
 
 @login_required
 def question(request, id):
+    question = get_list_or_404(Question, id=id)
     user_likes = {}
     if request.user.is_authenticated:
-        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id)
-    user_likes_answer ={}
+        user_likes = LikeQuestion.objects.authors_reaction(request.user.profile.id, question)
+    answers = pagination(Answer.objects.by_question(id), request, per_page=3)
+    user_likes_answer = {}
     if request.user.is_authenticated:
-        user_likes_answer = LikeAnswer.objects.authors_reaction(request.user.profile.id)
-    question = get_list_or_404(Question, id=id)
+        user_likes_answer = LikeAnswer.objects.authors_reaction(request.user.profile.id, answers.object_list)
     if request.method == 'GET':
         form = AnswerForm()
     else:
@@ -199,7 +196,7 @@ def question(request, id):
         'questions': question,
         'user_reaction': user_likes,
         'user_reaction_answer': user_likes_answer,
-        'answers': pagination(Answer.objects.by_question(id), request, per_page=3),
+        'answers': answers,
         'form': form,
     })
 
