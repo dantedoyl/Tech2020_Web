@@ -18,6 +18,8 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from app import views
+from django.conf.urls import url
+from django.urls import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,7 +33,8 @@ urlpatterns = [
     path('question/<int:id>/', views.question, name='question'),
     path('/', views.logout, name='logout'),
     path('vote/', views.vote, name='vote'),
-    path('correct/', views.correct, name='correct')
+    path('correct/', views.correct, name='correct'),
+    url('', include('django_prometheus.urls'))
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

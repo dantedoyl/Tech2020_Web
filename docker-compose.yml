@@ -8,12 +8,6 @@ services:
       - "80:8000"
 
   node_exporter:
-    image: quay.io/prometheus/node-exporter:latest
-    container_name: node_exporter
-    command:
-      - "--path.rootfs=/host"
+    image: prom/node-exporter
     ports:
       - "9100:9100"
-    restart: unless-stopped
-    volumes:
-      - "/:/host:ro"
